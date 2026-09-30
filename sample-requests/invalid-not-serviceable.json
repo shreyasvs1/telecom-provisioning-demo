@@ -1,0 +1,12 @@
+{
+  "orderId": "ORD-1003",
+  "customerId": "CUST-502",
+  "requestType": "NEW_INSTALL",
+  "serviceAddress": {
+    "street": "1 Remote Rd",
+    "city": "Nowhere",
+    "state": "MT",
+    "zip": "99999"
+  },
+  "requestedServices": ["INTERNET"]
+}

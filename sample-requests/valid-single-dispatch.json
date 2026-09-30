@@ -1,0 +1,12 @@
+{
+  "orderId": "ORD-1001",
+  "customerId": "CUST-500",
+  "requestType": "NEW_INSTALL",
+  "serviceAddress": {
+    "street": "123 Main St",
+    "city": "Springfield",
+    "state": "IL",
+    "zip": "62701"
+  },
+  "requestedServices": ["PHONE"]
+}

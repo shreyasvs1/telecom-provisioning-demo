@@ -1,0 +1,9 @@
+{
+  "orderId": "",
+  "requestType": "CANCEL_EVERYTHING",
+  "serviceAddress": {
+    "street": "789 Pine Rd",
+    "city": "Springfield"
+  },
+  "requestedServices": []
+}
