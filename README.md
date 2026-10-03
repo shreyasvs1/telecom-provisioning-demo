@@ -14,10 +14,31 @@ access to your real work repo.
 | 3. Enrich via external APIs (location, services) | `LocationEnrichmentClient`, `ServiceEnrichmentClient` — fake, deterministic "external calls" |
 | 4. Work spec catalog lookup | `WorkSpecCatalogService` + `WorkSpecCatalogEntry`/`WorkSpecCatalogRepository` — Oracle-backed (H2 locally) |
 | 5. Hierarchy / dispatch rules via ODM | `HierarchyRulesEngine` — plain Java rules standing in for a second ODM rule set |
+| Audit trail of requests and work orders | `ProvisioningRecordService` + the `persistence` package — saves every request and the work orders created for it |
 
 `ProvisioningOrchestrator` wires all five steps together in order — that's
 the single best file to point Claude at when you want it to "trace the whole
 flow."
+
+### What gets saved to the database
+
+Every request is saved before validation runs, so rejected requests are kept
+as well as successful ones:
+
+| Table | One row per | Key columns |
+|---|---|---|
+| `provisioning_request` | Incoming request, valid or not | `order_id`, `payload` (the request JSON), `status`, `status_detail`, `received_at`, `completed_at` |
+| `work_order` | Work order created for a completed request | `request_id`, `work_order_number` (e.g. `ORD-1002-WO1`), `dispatch_group`, `sequence_no` |
+| `work_order_spec` | Work spec inside a work order | `work_order_id`, `line_no`, `work_spec_code`, `duration_minutes`, `required_skill` |
+
+`status` moves from `RECEIVED` to one of:
+- `COMPLETED`: the pipeline finished and its work orders were saved.
+- `REJECTED`: a business rule failed (validation or serviceability). The
+  rule violations are in `status_detail`.
+- `FAILED`: an unexpected error. The error message is in `status_detail`.
+
+The same `orderId` can be submitted more than once; each submission gets its
+own row.
 
 ## Running it locally (no Oracle install needed)
 
@@ -53,7 +74,25 @@ curl -X POST http://localhost:8080/api/provisioning/process \
 
 You can also browse the H2 console at `http://localhost:8080/h2-console`
 (JDBC URL: `jdbc:h2:mem:provisioning`, user `sa`, no password) to see the
-`work_spec_catalog` table that step 4 queries.
+`work_spec_catalog` table that step 4 queries, plus the saved requests and
+work orders. For example, after sending the sample requests above:
+
+```sql
+-- Every request and how it ended
+SELECT id, order_id, status, status_detail, received_at
+FROM provisioning_request ORDER BY id;
+
+-- Work orders and their specs for one order
+SELECT r.order_id, w.work_order_number, w.dispatch_group, w.sequence_no,
+       s.line_no, s.work_spec_code, s.required_skill
+FROM provisioning_request r
+JOIN work_order w      ON w.request_id = r.id
+JOIN work_order_spec s ON s.work_order_id = w.id
+WHERE r.order_id = 'ORD-1002'
+ORDER BY w.sequence_no, s.line_no;
+```
+
+The database is in memory, so everything is cleared when the app stops.
 
 ### Using a real Oracle instance instead
 
@@ -61,7 +100,8 @@ If you want the full experience with real Oracle:
 1. Run Oracle XE locally in Docker (search "oracle-xe docker" for an image).
 2. Uncomment the `ojdbc11` dependency in `pom.xml`.
 3. Run `src/main/resources/schema-oracle.sql` and then the inserts from
-   `data.sql` against your Oracle instance.
+   `data.sql` against your Oracle instance. The schema file creates the
+   request and work order tables as well as the catalog.
 4. Start the app with `-Dspring.profiles.active=oracle` and fill in real
    credentials in `application.yml`.
 
