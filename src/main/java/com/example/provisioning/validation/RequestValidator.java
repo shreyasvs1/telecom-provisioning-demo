@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * STEP 2 of the pipeline: validates the incoming JSON.
@@ -21,8 +20,9 @@ import java.util.Set;
 @Component
 public class RequestValidator {
 
-    private static final Set<String> VALID_REQUEST_TYPES = Set.of("NEW_INSTALL", "UPGRADE", "TRANSFER");
-    private static final Set<String> VALID_SERVICE_CODES = Set.of("INTERNET", "PHONE", "TV");
+    // Public so the order entry screen offers exactly the values these rules accept
+    public static final List<String> VALID_REQUEST_TYPES = List.of("NEW_INSTALL", "UPGRADE", "TRANSFER");
+    public static final List<String> VALID_SERVICE_CODES = List.of("INTERNET", "PHONE", "TV");
 
     public void validate(ProvisioningRequest request) {
         List<String> violations = new ArrayList<>();

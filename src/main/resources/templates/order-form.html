@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head>
+    <title>New order</title>
+</head>
+<body>
+<main>
+    <h1>New order</h1>
+
+    <div class="message success" th:if="${submittedOrderId}">
+        Order <strong th:text="${submittedOrderId}">ORD-1004</strong> was submitted.
+        Work orders created: <span th:text="${workOrderCount}">1</span>.
+    </div>
+
+    <div class="message error" th:if="${violations}">
+        <p>Order <strong th:text="${rejectedOrderId}">ORD-1004</strong> was rejected:</p>
+        <ul>
+            <li th:each="violation : ${violations}" th:text="${violation}">RULE: message</li>
+        </ul>
+    </div>
+
+    <div class="message error" th:if="${failedOrderId}">
+        Order <strong th:text="${failedOrderId}">ORD-1004</strong> could not be processed because of an unexpected error.
+    </div>
+
+    <form th:action="@{/orders}" th:object="${orderForm}" method="post">
+        <fieldset>
+            <legend>Customer</legend>
+            <label for="customerId">Customer ID</label>
+            <input type="text" th:field="*{customerId}">
+
+            <label for="requestType">Request type</label>
+            <select th:field="*{requestType}">
+                <option value="">Select a request type</option>
+                <option th:each="type : ${requestTypes}" th:value="${type}" th:text="${type}">NEW_INSTALL</option>
+            </select>
+        </fieldset>
+
+        <fieldset>
+            <legend>Service address</legend>
+            <label for="street">Street</label>
+            <input type="text" th:field="*{street}">
+
+            <label for="city">City</label>
+            <input type="text" th:field="*{city}">
+
+            <label for="state">State</label>
+            <input type="text" th:field="*{state}">
+
+            <label for="zip">Zip</label>
+            <input type="text" th:field="*{zip}">
+        </fieldset>
+
+        <fieldset>
+            <legend>Requested services</legend>
+            <label class="choice" th:each="code : ${serviceCodes}">
+                <input type="checkbox" th:field="*{requestedServices}" th:value="${code}">
+                <span th:text="${code}">INTERNET</span>
+            </label>
+        </fieldset>
+
+        <div class="actions">
+            <button type="submit" class="button primary">Submit order</button>
+            <a class="button" th:href="@{/}">Cancel</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

@@ -72,6 +72,14 @@ curl -X POST http://localhost:8080/api/provisioning/process \
   -d @sample-requests/invalid-not-serviceable.json
 ```
 
+### Order entry screen
+
+Instead of curl, you can enter an order in a browser: open
+`http://localhost:8080/` and choose **New order**. The form has no order ID
+field; the app generates one (`ORD-<number>`) when you submit. The screen runs
+the same pipeline as the JSON endpoint, so the orders it creates are saved to
+the same tables.
+
 You can also browse the H2 console at `http://localhost:8080/h2-console`
 (JDBC URL: `jdbc:h2:mem:provisioning`, user `sa`, no password) to see the
 `work_spec_catalog` table that step 4 queries, plus the saved requests and

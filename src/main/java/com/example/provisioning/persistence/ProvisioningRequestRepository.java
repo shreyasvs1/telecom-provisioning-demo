@@ -7,4 +7,6 @@ import java.util.List;
 public interface ProvisioningRequestRepository extends JpaRepository<ProvisioningRequestRecord, Long> {
 
     List<ProvisioningRequestRecord> findByOrderIdOrderByIdAsc(String orderId);
+
+    boolean existsByOrderId(String orderId);
 }

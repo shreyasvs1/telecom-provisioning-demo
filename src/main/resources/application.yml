@@ -2,6 +2,11 @@ spring:
   profiles:
     active: h2   # switch to "oracle" once you have a real Oracle instance to point at
 
+server:
+  servlet:
+    session:
+      tracking-modes: cookie   # keep ;jsessionid=... out of the order entry screen's URLs
+
 ---
 spring:
   config:

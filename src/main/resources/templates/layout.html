@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<!-- Shared page layout. A page uses it with:
+     th:replace="~{layout :: page(~{::title}, ~{::main})}" -->
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:fragment="page(title, content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:replace="${title}">Telecom Provisioning</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header class="site-header">
+    <a class="site-name" th:href="@{/}">Telecom Provisioning</a>
+    <nav>
+        <a th:href="@{/}">Home</a>
+        <a th:href="@{/orders/new}">New order</a>
+    </nav>
+</header>
+<main th:replace="${content}"></main>
+</body>
+</html>
