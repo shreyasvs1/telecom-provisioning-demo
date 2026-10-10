@@ -80,6 +80,21 @@ field; the app generates one (`ORD-<number>`) when you submit. The screen runs
 the same pipeline as the JSON endpoint, so the orders it creates are saved to
 the same tables.
 
+To save typing the address, fill in what you know of it and press **Find
+address**. The form looks it up and lists matching addresses in the United
+States and Canada; choosing one fills in street, city, state and zip / postal
+code. A field the match has no value for is cleared, so check the result
+before submitting (house numbers are often missing).
+
+The lookup is the one real external call in this project. It goes straight
+from your browser to the public [Nominatim](https://nominatim.org/) service
+(OpenStreetMap), so it needs internet access; the server never calls it. If
+Nominatim is unreachable the form says so and you type the address by hand.
+Its [usage policy](https://operations.osmfoundation.org/policies/nominatim/)
+forbids auto-complete and allows at most one request per second, which is why
+this is a button and not suggest-as-you-type. The code is in
+`src/main/resources/static/js/` (`address-lookup.js` and `address-form.js`).
+
 You can also browse the H2 console at `http://localhost:8080/h2-console`
 (JDBC URL: `jdbc:h2:mem:provisioning`, user `sa`, no password) to see the
 `work_spec_catalog` table that step 4 queries, plus the saved requests and

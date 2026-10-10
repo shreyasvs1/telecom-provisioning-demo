@@ -47,8 +47,18 @@
             <label for="state">State</label>
             <input type="text" th:field="*{state}">
 
-            <label for="zip">Zip</label>
+            <label for="zip">Zip / Postal Code</label>
             <input type="text" th:field="*{zip}">
+
+            <!-- Hidden until address-form.js reveals it, so the form is unchanged without JavaScript -->
+            <div class="address-lookup" id="address-lookup" hidden>
+                <button type="button" class="button" id="find-address">Find address</button>
+                <p class="lookup-status" id="address-lookup-status" role="status" aria-live="polite"></p>
+                <div class="address-matches" id="address-matches" hidden>
+                    <ul id="address-match-list" aria-label="Matching addresses"></ul>
+                    <button type="button" class="button" id="close-address-matches">Close without choosing</button>
+                </div>
+            </div>
         </fieldset>
 
         <fieldset>
@@ -64,6 +74,14 @@
             <a class="button" th:href="@{/}">Cancel</a>
         </div>
     </form>
+
+    <p class="osm-attribution">
+        Address search &copy;
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors
+    </p>
+
+    <script th:src="@{/js/address-lookup.js}"></script>
+    <script th:src="@{/js/address-form.js}"></script>
 </main>
 </body>
 </html>

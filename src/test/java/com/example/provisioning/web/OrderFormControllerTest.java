@@ -75,6 +75,28 @@ class OrderFormControllerTest {
     }
 
     @Test
+    void newOrderPage_offersFindAddressWithoutSubmittingTheForm() throws Exception {
+        mockMvc.perform(get("/orders/new"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<label for=\"zip\">Zip / Postal Code</label>")))
+                .andExpect(content().string(containsString("<button type=\"button\" class=\"button\" id=\"find-address\">Find address</button>")))
+                // Hidden in the markup; only JavaScript reveals it
+                .andExpect(content().string(containsString("id=\"address-lookup\" hidden")))
+                .andExpect(content().string(containsString("src=\"/js/address-lookup.js\"")))
+                .andExpect(content().string(containsString("src=\"/js/address-form.js\"")))
+                .andExpect(content().string(containsString("https://www.openstreetmap.org/copyright")));
+    }
+
+    @Test
+    void addressLookupScripts_areServed() throws Exception {
+        mockMvc.perform(get("/js/address-lookup.js"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("nominatim.openstreetmap.org")));
+        mockMvc.perform(get("/js/address-form.js"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void twoOrdersSubmittedInARow_receiveDifferentGeneratedOrderIds() throws Exception {
         String first = submitValidOrder();
         String second = submitValidOrder();
