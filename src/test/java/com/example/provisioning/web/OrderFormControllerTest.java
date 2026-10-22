@@ -13,10 +13,14 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.matchesRegex;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -139,13 +143,114 @@ class OrderFormControllerTest {
                 .andExpect(content().string(containsString("value=\"1 Remote Rd\"")));
     }
 
+    // KAN-6 AC1 and AC5
     @Test
-    void emptyForm_isRejectedWithoutAnErrorPage() throws Exception {
+    void emptyForm_showsAMessageForEachFieldAndCreatesNoOrder() throws Exception {
+        long before = requestRepository.count();
+
         mockMvc.perform(post("/orders"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("order-form"))
-                .andExpect(content().string(containsString("RULE_CUSTOMER_ID_REQUIRED")))
-                .andExpect(content().string(containsString("RULE_SERVICES_REQUIRED")));
+                .andExpect(model().attributeHasFieldErrors("orderForm",
+                        "customerId", "requestType", "street", "city", "state", "zip", "requestedServices"))
+                .andExpect(content().string(containsString("Enter the customer ID.")))
+                .andExpect(content().string(containsString("Choose a request type.")))
+                .andExpect(content().string(containsString("Enter the street.")))
+                .andExpect(content().string(containsString("Enter the city.")))
+                .andExpect(content().string(containsString("Enter the state or province.")))
+                .andExpect(content().string(containsString("Enter the zip or postal code.")))
+                .andExpect(content().string(containsString("Choose at least one service.")))
+                .andExpect(content().string(not(containsString("was rejected"))));
+
+        assertEquals(before, requestRepository.count());
+    }
+
+    // KAN-6 AC2
+    @Test
+    void oneAddressFieldMissing_showsAMessageForThatFieldOnly() throws Exception {
+        mockMvc.perform(order("zip", ""))
+                .andExpect(status().isOk())
+                .andExpect(model().errorCount(1))
+                .andExpect(model().attributeHasFieldErrors("orderForm", "zip"))
+                .andExpect(content().string(containsString("Enter the zip or postal code.")))
+                .andExpect(content().string(not(containsString("Enter the street."))))
+                .andExpect(content().string(not(containsString("Enter the city."))))
+                .andExpect(content().string(not(containsString("Enter the state or province."))));
+    }
+
+    // KAN-6 AC3
+    @Test
+    void noServiceSelected_showsAMessageAtTheServicesField() throws Exception {
+        mockMvc.perform(order("requestedServices", null))
+                .andExpect(status().isOk())
+                .andExpect(model().errorCount(1))
+                .andExpect(model().attributeHasFieldErrors("orderForm", "requestedServices"))
+                .andExpect(content().string(containsString("Choose at least one service.")));
+    }
+
+    // KAN-6 AC4
+    @Test
+    void failedSubmission_keepsTheEnteredValues() throws Exception {
+        mockMvc.perform(post("/orders")
+                        .param("customerId", "CUST-600")
+                        .param("requestType", "UPGRADE")
+                        .param("street", "9 Elm St")
+                        .param("city", "")
+                        .param("state", "IL")
+                        .param("zip", "62701")
+                        .param("requestedServices", "INTERNET"))
+                .andExpect(status().isOk())
+                .andExpect(model().attributeHasFieldErrors("orderForm", "city"))
+                .andExpect(content().string(containsString("value=\"CUST-600\"")))
+                .andExpect(content().string(containsString("<option value=\"UPGRADE\" selected=\"selected\">")))
+                .andExpect(content().string(containsString("value=\"9 Elm St\"")))
+                .andExpect(content().string(containsString("value=\"62701\"")))
+                .andExpect(content().string(matchesRegex("(?s).*<input type=\"checkbox\" value=\"INTERNET\"[^>]*checked=\"checked\".*")));
+    }
+
+    @Test
+    void unknownRequestTypeOrService_isReportedAgainstItsField() throws Exception {
+        mockMvc.perform(order("requestType", "CANCEL_EVERYTHING", "requestedServices", "RADIO"))
+                .andExpect(status().isOk())
+                .andExpect(model().errorCount(2))
+                .andExpect(model().attributeHasFieldErrors("orderForm", "requestType", "requestedServices"))
+                .andExpect(content().string(containsString("Choose one of NEW_INSTALL, UPGRADE, TRANSFER.")))
+                .andExpect(content().string(containsString("is not a service that can be ordered.")));
+    }
+
+    // KAN-6 AC6
+    @Test
+    void validForm_passesTheFieldChecksAndIsProcessed() throws Exception {
+        long before = requestRepository.count();
+
+        mockMvc.perform(order())
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/orders/new"))
+                .andExpect(flash().attributeExists("submittedOrderId"));
+
+        assertEquals(before + 1, requestRepository.count());
+    }
+
+    /** A valid order, with optional name/value overrides. A null value leaves that field out entirely. */
+    private MockHttpServletRequestBuilder order(String... overrides) {
+        Map<String, String> fields = new LinkedHashMap<>();
+        fields.put("customerId", "CUST-500");
+        fields.put("requestType", "NEW_INSTALL");
+        fields.put("street", "123 Main St");
+        fields.put("city", "Springfield");
+        fields.put("state", "IL");
+        fields.put("zip", "62701");
+        fields.put("requestedServices", "PHONE");
+        for (int i = 0; i < overrides.length; i += 2) {
+            fields.put(overrides[i], overrides[i + 1]);
+        }
+        MockHttpServletRequestBuilder request = post("/orders");
+        fields.forEach((name, value) -> {
+            if (value != null) {
+                request.param(name, value);
+            }
+        });
+        return request;
     }
 
     private String submitValidOrder() throws Exception {

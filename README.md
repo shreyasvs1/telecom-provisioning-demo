@@ -80,6 +80,15 @@ field; the app generates one (`ORD-<number>`) when you submit. The screen runs
 the same pipeline as the JSON endpoint, so the orders it creates are saved to
 the same tables.
 
+The form checks its own fields before anything is processed. A missing or
+invalid value (customer ID, request type, any of the four address fields, or no
+service selected) is reported under that field, what you typed is kept, and
+nothing is saved: the order gets no ID and no `provisioning_request` row. These
+checks live in `OrderFormValidator` and mirror `RequestValidator`, which still
+checks every order. An order that passes the field checks but fails a pipeline
+rule, such as an unserviceable zip, is still saved as `REJECTED` and its rule
+violations are listed above the form.
+
 To save typing the address, fill in what you know of it and press **Find
 address**. The form looks it up and lists matching addresses in the United
 States and Canada; choosing one fills in street, city, state and zip / postal

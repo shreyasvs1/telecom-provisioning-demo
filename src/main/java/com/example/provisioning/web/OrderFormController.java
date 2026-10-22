@@ -7,6 +7,7 @@ import com.example.provisioning.service.ProvisioningOrchestrator;
 import com.example.provisioning.validation.RequestValidator;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,10 +28,13 @@ public class OrderFormController {
 
     private final ProvisioningOrchestrator orchestrator;
     private final OrderIdGenerator orderIdGenerator;
+    private final OrderFormValidator formValidator;
 
-    public OrderFormController(ProvisioningOrchestrator orchestrator, OrderIdGenerator orderIdGenerator) {
+    public OrderFormController(ProvisioningOrchestrator orchestrator, OrderIdGenerator orderIdGenerator,
+                               OrderFormValidator formValidator) {
         this.orchestrator = orchestrator;
         this.orderIdGenerator = orderIdGenerator;
+        this.formValidator = formValidator;
     }
 
     @ModelAttribute("requestTypes")
@@ -55,7 +59,14 @@ public class OrderFormController {
     }
 
     @PostMapping("/orders")
-    public String submit(@ModelAttribute("orderForm") OrderForm form, Model model, RedirectAttributes redirect) {
+    public String submit(@ModelAttribute("orderForm") OrderForm form, BindingResult fieldErrors,
+                         Model model, RedirectAttributes redirect) {
+        // Field checks come first: a form that fails them gets no order ID and is not saved
+        formValidator.validate(form, fieldErrors);
+        if (fieldErrors.hasErrors()) {
+            return FORM_VIEW;
+        }
+
         String orderId = orderIdGenerator.nextOrderId();
         try {
             ProvisioningResponse response = orchestrator.process(form.toRequest(orderId));

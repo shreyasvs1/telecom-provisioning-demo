@@ -24,31 +24,41 @@
     </div>
 
     <form th:action="@{/orders}" th:object="${orderForm}" method="post">
+        <div class="message error" th:if="${#fields.hasAnyErrors()}">
+            Some details are missing or not valid. Correct the fields marked below, then submit again.
+        </div>
+
         <fieldset>
             <legend>Customer</legend>
             <label for="customerId">Customer ID</label>
-            <input type="text" th:field="*{customerId}">
+            <input type="text" th:field="*{customerId}" th:errorclass="field-invalid">
+            <p class="field-error" th:if="${#fields.hasErrors('customerId')}" th:errors="*{customerId}">Message</p>
 
             <label for="requestType">Request type</label>
-            <select th:field="*{requestType}">
+            <select th:field="*{requestType}" th:errorclass="field-invalid">
                 <option value="">Select a request type</option>
                 <option th:each="type : ${requestTypes}" th:value="${type}" th:text="${type}">NEW_INSTALL</option>
             </select>
+            <p class="field-error" th:if="${#fields.hasErrors('requestType')}" th:errors="*{requestType}">Message</p>
         </fieldset>
 
         <fieldset>
             <legend>Service address</legend>
             <label for="street">Street</label>
-            <input type="text" th:field="*{street}">
+            <input type="text" th:field="*{street}" th:errorclass="field-invalid">
+            <p class="field-error" th:if="${#fields.hasErrors('street')}" th:errors="*{street}">Message</p>
 
             <label for="city">City</label>
-            <input type="text" th:field="*{city}">
+            <input type="text" th:field="*{city}" th:errorclass="field-invalid">
+            <p class="field-error" th:if="${#fields.hasErrors('city')}" th:errors="*{city}">Message</p>
 
             <label for="state">State</label>
-            <input type="text" th:field="*{state}">
+            <input type="text" th:field="*{state}" th:errorclass="field-invalid">
+            <p class="field-error" th:if="${#fields.hasErrors('state')}" th:errors="*{state}">Message</p>
 
             <label for="zip">Zip / Postal Code</label>
-            <input type="text" th:field="*{zip}">
+            <input type="text" th:field="*{zip}" th:errorclass="field-invalid">
+            <p class="field-error" th:if="${#fields.hasErrors('zip')}" th:errors="*{zip}">Message</p>
 
             <!-- Hidden until address-form.js reveals it, so the form is unchanged without JavaScript -->
             <div class="address-lookup" id="address-lookup" hidden>
@@ -67,6 +77,7 @@
                 <input type="checkbox" th:field="*{requestedServices}" th:value="${code}">
                 <span th:text="${code}">INTERNET</span>
             </label>
+            <p class="field-error" th:if="${#fields.hasErrors('requestedServices')}" th:errors="*{requestedServices}">Message</p>
         </fieldset>
 
         <div class="actions">

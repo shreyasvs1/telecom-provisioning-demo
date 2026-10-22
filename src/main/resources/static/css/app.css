@@ -76,6 +76,10 @@ input[type="text"], select {
 .message.success { background: #e3f9e5; border: 1px solid #57ae5b; }
 .message.error { background: #ffe3e3; border: 1px solid #e12d39; }
 
+/* Field-level validation messages (KAN-6) */
+.field-invalid { border-color: #e12d39 !important; background: #fff7f7; }
+.field-error { margin: 4px 0 0; color: #b0181f; font-size: 0.85rem; }
+
 /* Find address: lookup button, status line and the list of matches */
 .address-lookup { margin-top: 14px; }
 .button[aria-disabled="true"] { opacity: 0.6; cursor: progress; }

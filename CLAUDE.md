@@ -12,7 +12,7 @@ State as of 10 October 2026. Owner: Shreyas V S.
 
 ```bash
 mvn spring-boot:run                # start on http://localhost:8080
-mvn -q test                        # 29 tests, all Java, no internet needed
+mvn -q test                        # 34 tests, all Java, no internet needed
 mvn spring-boot:run -Dspring-boot.run.arguments=--server.port=8081   # a second instance
 ```
 
@@ -31,7 +31,7 @@ Everything is under `com.example.provisioning`.
 | Package | Role |
 |---|---|
 | `controller` | `ProvisioningController`: JSON endpoint `POST /api/provisioning/process` |
-| `web` | `OrderFormController`, `OrderForm`: the browser order entry screen (`/`, `/orders/new`, `POST /orders`) |
+| `web` | `OrderFormController`, `OrderForm`, `OrderFormValidator`: the browser order entry screen (`/`, `/orders/new`, `POST /orders`) |
 | `service` | `ProvisioningOrchestrator` runs the pipeline; `OrderIdGenerator` makes IDs for screen orders |
 | `validation` | `RequestValidator` (step 2). `VALID_REQUEST_TYPES` and `VALID_SERVICE_CODES` are public so the form offers exactly those values |
 | `enrichment` | `LocationEnrichmentClient`, `ServiceEnrichmentClient` (step 3, fake, no network) |
@@ -59,13 +59,15 @@ screen orders. The screen does not call the JSON endpoint.
 | Saving every request and its work orders | (original) | `persistence`; tables `provisioning_request`, `work_order`, `work_order_spec` |
 | Order entry screen: New order form, generated order ID, cancel | KAN-5, Done | `web`, templates, `OrderIdGenerator`, sequence `order_id_seq` |
 | Find address lookup on the form | KAN-14, KAN-15, KAN-16, Done | `static/js/`, `order-form.html` |
+| Field-by-field validation on the form | KAN-6 | `OrderFormValidator`, `order-form.html` |
 | Skills for catalog summary, work order summary, Jira stories | none | `.claude/skills/` |
 
-Not built yet: KAN-4 (dashboard with status filter), KAN-6 (field-by-field
-validation messages), KAN-7 (full result screen). Feature KAN-3 (testing of the
-intake form) is still empty. The home page `/` is a placeholder for the
-dashboard, and the form's handling of rejected orders is a stopgap that KAN-6
-and KAN-7 will replace.
+Not built yet: KAN-4 (dashboard with status filter), KAN-7 (full result
+screen). Feature KAN-3 (testing of the intake form) is still empty. The home
+page `/` is a placeholder for the dashboard. A form that passes the field
+checks but is then rejected by the pipeline (for example an unserviceable zip)
+still shows the rule violations in one block above the form; KAN-7 will
+replace that.
 
 ## Decisions already made
 
@@ -82,6 +84,9 @@ Do not reopen these without being asked.
 - Sessions are cookie-only (`server.servlet.session.tracking-modes: cookie`)
   to keep `;jsessionid=` out of URLs.
 - The dashboard (KAN-4) will show all orders by default with a filter on status.
+- Field checks (KAN-6) run on the server in `OrderFormValidator` before the
+  pipeline. A form that fails them is not saved and uses up no order ID.
+  `RequestValidator` stays the authority and still runs on every order.
 
 **Find address (KAN-14)**
 
@@ -113,6 +118,9 @@ Do not reopen these without being asked.
   screen, skills or address lookup.
 - **Commit and push only when asked.** Shreyas usually reviews first, then
   says to commit, then separately to push.
+- **After any code change, run the `sanity-tester` subagent** before saying
+  the change is done, and relay its verdict. It runs the test cases documented
+  in Jira under KAN-1 and is read-only (`.claude/agents/sanity-tester.md`).
 - **A finished story usually means four updates,** each on request: code,
   README, Jira status, Confluence.
 - **Jira stories:** use the `provisioning-jira-story-writer` skill. Title is
